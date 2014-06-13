@@ -412,4 +412,9 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
     }
 
+    @Override
+    public void setExportImages(boolean exportImages) {
+        exportWithImages = exportImages;        
+    }
+
 }
