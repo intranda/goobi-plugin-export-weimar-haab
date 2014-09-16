@@ -91,12 +91,16 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
             logical = logical.getAllChildren().get(0);
         }
 
-        // TODO liste aktualisieren
         List<String> whiteList = new ArrayList<>();
         whiteList.add("CoverBackInside");
         whiteList.add("CoverForeEdgeRight");
         whiteList.add("CoverFrontInside");
         whiteList.add("CoverFrontOutside");
+        whiteList.add("BuchspiegelVorne");
+        whiteList.add("BuchspiegelHinten");
+        whiteList.add("FrontSection");
+        whiteList.add("HeadSection");
+        whiteList.add("FootSection");
         whiteList.add("Cover");
 
         // test for 'Einband' and 'Buchschnitte;
@@ -109,8 +113,8 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
             }
 
             if (!docstructList.isEmpty()) {
-                // TODO type setzen
-                DocStruct ds = gdzfile.getDigitalDocument().createDocStruct(myPrefs.getDocStrctTypeByName("CurriculumVitae"));
+
+                DocStruct ds = gdzfile.getDigitalDocument().createDocStruct(myPrefs.getDocStrctTypeByName("Cover"));
                 // neues docstruct einfügen
                 try {
                     logical.addChild(ds);
