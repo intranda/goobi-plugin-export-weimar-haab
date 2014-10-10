@@ -101,6 +101,11 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         whiteList.add("FrontSection");
         whiteList.add("HeadSection");
         whiteList.add("FootSection");
+        whiteList.add("Frontispiece");
+        whiteList.add("Spine");
+        whiteList.add("Wrapper");
+        whiteList.add("WrapperWithTitle");
+        whiteList.add("RearCover");
         whiteList.add("Cover");
 
         // test for 'Einband' and 'Buchschnitte;
@@ -144,19 +149,18 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                 Collections.sort(pages, new Comparator<DocStruct>() {
                     @Override
                     public int compare(DocStruct o1, DocStruct o2) {
-                        MetadataType mdt =  myPrefs.getMetadataTypeByName("physPageNumber");
+                        MetadataType mdt = myPrefs.getMetadataTypeByName("physPageNumber");
                         String value1 = o1.getAllMetadataByType(mdt).get(0).getValue();
                         String value2 = o2.getAllMetadataByType(mdt).get(0).getValue();
                         Integer order1 = Integer.parseInt(value1);
                         Integer order2 = Integer.parseInt(value2);
                         return order1.compareTo(order2);
                     }
-                }
-                );
+                });
                 for (DocStruct page : pages) {
                     ds.addReferenceTo(page, "logical_physical");
                 }
-//                    // alte docstruct löschen
+                //                    // alte docstruct löschen
                 for (DocStruct old : docstructList) {
                     logical.removeChild(old);
                 }
@@ -170,12 +174,12 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
          * -------------------------------- Metadaten validieren --------------------------------
          */
 
-//        if (ConfigurationHelper.getInstance().isUseMetadataValidation()) {
-//            MetadatenVerifizierung mv = new MetadatenVerifizierung();
-//            if (!mv.validate(gdzfile, prefs, process)) {
-//                return false;
-//            }
-//        }
+        //        if (ConfigurationHelper.getInstance().isUseMetadataValidation()) {
+        //            MetadatenVerifizierung mv = new MetadatenVerifizierung();
+        //            if (!mv.validate(gdzfile, prefs, process)) {
+        //                return false;
+        //            }
+        //        }
 
         /*
          * -------------------------------- Speicherort vorbereiten und downloaden --------------------------------
@@ -418,7 +422,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
     @Override
     public void setExportImages(boolean exportImages) {
-        exportWithImages = exportImages;        
+        exportWithImages = exportImages;
     }
 
 }
