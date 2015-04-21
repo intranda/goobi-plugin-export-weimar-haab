@@ -28,6 +28,7 @@ import ugh.exceptions.ReadException;
 import ugh.exceptions.TypeNotAllowedAsChildException;
 import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.exceptions.WriteException;
+import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.export.download.ExportMets;
 import de.sub.goobi.helper.FilesystemHelper;
@@ -73,193 +74,138 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         String atsPpnBand = process.getTitel();
 
         Fileformat gdzfile;
+
         ExportFileformat newfile = MetadatenHelper.getExportFileformatByName(process.getProjekt().getFileFormatDmsExport(), process.getRegelsatz());
-        try {
-            gdzfile = process.readMetadataFile();
 
-            newfile.setDigitalDocument(gdzfile.getDigitalDocument());
-            gdzfile = newfile;
-
-        } catch (Exception e) {
-            Helper.setFehlerMeldung(Helper.getTranslation("exportError") + process.getTitel(), e);
-            logger.error("Export abgebrochen, xml-LeseFehler", e);
-            return false;
-        }
-
-        DocStruct logical = gdzfile.getDigitalDocument().getLogicalDocStruct();
-        if (logical.getType().isAnchor()) {
-            logical = logical.getAllChildren().get(0);
-        }
-
-        List<String> whiteList = new ArrayList<>();
-        whiteList.add("CoverBackInside");
-        whiteList.add("CoverForeEdgeRight");
-        whiteList.add("CoverFrontInside");
-        whiteList.add("CoverFrontOutside");
-        whiteList.add("BuchspiegelVorne");
-        whiteList.add("BuchspiegelHinten");
-        whiteList.add("FrontSection");
-        whiteList.add("HeadSection");
-        whiteList.add("FootSection");
-        whiteList.add("Frontispiece");
-        whiteList.add("Spine");
-        whiteList.add("Wrapper");
-        whiteList.add("WrapperWithTitle");
-        whiteList.add("RearCover");
-        whiteList.add("Cover");
-
-        // test for 'Einband' and 'Buchschnitte;
-        if (logical.getAllChildren() != null && !logical.getAllChildren().isEmpty()) {
-            List<DocStruct> docstructList = new ArrayList<>();
-            for (DocStruct ds : logical.getAllChildren()) {
-                if (whiteList.contains(ds.getType().getName())) {
-                    docstructList.add(ds);
-                }
-            }
-
-            if (!docstructList.isEmpty()) {
-
-                DocStruct ds = gdzfile.getDigitalDocument().createDocStruct(myPrefs.getDocStrctTypeByName("Cover"));
-                // neues docstruct einfügen
-                try {
-                    logical.addChild(ds);
-                    logical.moveChild(ds, 0);
-                } catch (TypeNotAllowedAsChildException e) {
-                    logger.error(e);
-                }
-                List<DocStruct> pages = new ArrayList<>();
-                for (DocStruct old : docstructList) {
-                    // seiten zuweisen
-                    List<Reference> references = old.getAllToReferences();
-                    for (Reference ref : references) {
-                        DocStruct page = ref.getTarget();
-                        boolean checked = false;
-                        for (DocStruct selectedPage : pages) {
-                            if (selectedPage.getImageName().equals(page.getImageName())) {
-                                checked = true;
-                                break;
-                            }
-                        }
-                        if (!checked) {
-                            pages.add(page);
-                        }
-                    }
-
-                }
-                Collections.sort(pages, new Comparator<DocStruct>() {
-                    @Override
-                    public int compare(DocStruct o1, DocStruct o2) {
-                        MetadataType mdt = myPrefs.getMetadataTypeByName("physPageNumber");
-                        String value1 = o1.getAllMetadataByType(mdt).get(0).getValue();
-                        String value2 = o2.getAllMetadataByType(mdt).get(0).getValue();
-                        Integer order1 = Integer.parseInt(value1);
-                        Integer order2 = Integer.parseInt(value2);
-                        return order1.compareTo(order2);
-                    }
-                });
-                for (DocStruct page : pages) {
-                    ds.addReferenceTo(page, "logical_physical");
-                }
-                //                    // alte docstruct löschen
-                for (DocStruct old : docstructList) {
-                    logical.removeChild(old);
-                }
-            }
-
-        }
-
-        trimAllMetadata(gdzfile.getDigitalDocument().getLogicalDocStruct());
-
-        /*
-         * -------------------------------- Metadaten validieren --------------------------------
-         */
-
-        //        if (ConfigurationHelper.getInstance().isUseMetadataValidation()) {
-        //            MetadatenVerifizierung mv = new MetadatenVerifizierung();
-        //            if (!mv.validate(gdzfile, prefs, process)) {
-        //                return false;
-        //            }
-        //        }
-
-        /*
-         * -------------------------------- Speicherort vorbereiten und downloaden --------------------------------
-         */
-        String zielVerzeichnis;
         File benutzerHome;
 
-        zielVerzeichnis = process.getProjekt().getDmsImportImagesPath();
-        benutzerHome = new File(zielVerzeichnis);
+        @SuppressWarnings("unchecked")
+        List<String> folderList = ConfigPlugins.getPluginConfig(this).getList("exportFolder");
 
-        /* ggf. noch einen Vorgangsordner anlegen */
-        if (process.getProjekt().isDmsImportCreateProcessFolder()) {
-            benutzerHome = new File(benutzerHome + File.separator + process.getTitel());
-            zielVerzeichnis = benutzerHome.getAbsolutePath();
-            /* alte Import-Ordner löschen */
-            if (!Helper.deleteDir(benutzerHome)) {
-                Helper.setFehlerMeldung("Export canceled, Process: " + process.getTitel(), "Import folder could not be cleared");
-                return false;
-            }
-            /* alte Success-Ordner löschen */
-            File successFile = new File(process.getProjekt().getDmsImportSuccessPath() + File.separator + process.getTitel());
-            if (!Helper.deleteDir(successFile)) {
-                Helper.setFehlerMeldung("Export canceled, Process: " + process.getTitel(), "Success folder could not be cleared");
-                return false;
-            }
-            /* alte Error-Ordner löschen */
-            File errorfile = new File(process.getProjekt().getDmsImportErrorPath() + File.separator + process.getTitel());
-            if (!Helper.deleteDir(errorfile)) {
-                Helper.setFehlerMeldung("Export canceled, Process: " + process.getTitel(), "Error folder could not be cleared");
-                return false;
-            }
+        for (String folder : folderList) {
+            if (folder != null && !folder.isEmpty()) {
+                benutzerHome = new File(folder.trim());
 
-            if (!benutzerHome.exists()) {
-                benutzerHome.mkdir();
-            }
-        }
+                try {
+                    gdzfile = process.readMetadataFile();
 
-        /*
-         * -------------------------------- der eigentliche Download der Images --------------------------------
-         */
-        try {
-            if (this.exportWithImages) {
-                imageDownload(process, benutzerHome, atsPpnBand, imageDirectorySuffix);
-                fulltextDownload(process, benutzerHome, atsPpnBand);
-            } else if (this.exportFulltext) {
-                fulltextDownload(process, benutzerHome, atsPpnBand);
-            }
-        } catch (Exception e) {
-            Helper.setFehlerMeldung("Export canceled, Process: " + process.getTitel(), e);
-            return false;
-        }
+                    newfile.setDigitalDocument(gdzfile.getDigitalDocument());
+                    gdzfile = newfile;
 
-        /*
-         * -------------------------------- zum Schluss Datei an gewünschten Ort exportieren entweder direkt in den Import-Ordner oder ins
-         * Benutzerhome anschliessend den Import-Thread starten --------------------------------
-         */
-        boolean externalExport =
-                MetadatenHelper.getExportFileformatByName(process.getProjekt().getFileFormatDmsExport(), process.getRegelsatz()) != null;
+                } catch (Exception e) {
+                    Helper.setFehlerMeldung(Helper.getTranslation("exportError") + process.getTitel(), e);
+                    logger.error("Export abgebrochen, xml-LeseFehler", e);
+                    return false;
+                }
 
-        if (process.getProjekt().isUseDmsImport()) {
-            if (externalExport) {
+                DocStruct logical = gdzfile.getDigitalDocument().getLogicalDocStruct();
+                if (logical.getType().isAnchor()) {
+                    logical = logical.getAllChildren().get(0);
+                }
+
+                List<String> whiteList = new ArrayList<>();
+                whiteList.add("CoverBackInside");
+                whiteList.add("CoverForeEdgeRight");
+                whiteList.add("CoverFrontInside");
+                whiteList.add("CoverFrontOutside");
+                whiteList.add("BuchspiegelVorne");
+                whiteList.add("BuchspiegelHinten");
+                whiteList.add("FrontSection");
+                whiteList.add("HeadSection");
+                whiteList.add("FootSection");
+                whiteList.add("Frontispiece");
+                whiteList.add("Spine");
+                whiteList.add("Wrapper");
+                whiteList.add("WrapperWithTitle");
+                whiteList.add("RearCover");
+                whiteList.add("Cover");
+
+                // create cover for all docstructs
+                if (logical.getAllChildren() != null && !logical.getAllChildren().isEmpty()) {
+                    List<DocStruct> docstructList = new ArrayList<>();
+                    for (DocStruct ds : logical.getAllChildren()) {
+                        if (whiteList.contains(ds.getType().getName())) {
+                            docstructList.add(ds);
+                        }
+                    }
+
+                    if (!docstructList.isEmpty()) {
+
+                        DocStruct ds = gdzfile.getDigitalDocument().createDocStruct(myPrefs.getDocStrctTypeByName("Cover"));
+                        // neues docstruct einfügen
+                        try {
+                            logical.addChild(ds);
+                            logical.moveChild(ds, 0);
+                        } catch (TypeNotAllowedAsChildException e) {
+                            logger.error(e);
+                        }
+                        List<DocStruct> pages = new ArrayList<>();
+                        for (DocStruct old : docstructList) {
+                            // seiten zuweisen
+                            List<Reference> references = old.getAllToReferences();
+                            for (Reference ref : references) {
+                                DocStruct page = ref.getTarget();
+                                boolean checked = false;
+                                for (DocStruct selectedPage : pages) {
+                                    if (selectedPage.getImageName().equals(page.getImageName())) {
+                                        checked = true;
+                                        break;
+                                    }
+                                }
+                                if (!checked) {
+                                    pages.add(page);
+                                }
+                            }
+
+                        }
+                        Collections.sort(pages, new Comparator<DocStruct>() {
+                            @Override
+                            public int compare(DocStruct o1, DocStruct o2) {
+                                MetadataType mdt = myPrefs.getMetadataTypeByName("physPageNumber");
+                                String value1 = o1.getAllMetadataByType(mdt).get(0).getValue();
+                                String value2 = o2.getAllMetadataByType(mdt).get(0).getValue();
+                                Integer order1 = Integer.parseInt(value1);
+                                Integer order2 = Integer.parseInt(value2);
+                                return order1.compareTo(order2);
+                            }
+                        });
+                        for (DocStruct page : pages) {
+                            ds.addReferenceTo(page, "logical_physical");
+                        }
+                        //                    // alte docstruct löschen
+                        for (DocStruct old : docstructList) {
+                            logical.removeChild(old);
+                        }
+                    }
+
+                }
+
+                trimAllMetadata(gdzfile.getDigitalDocument().getLogicalDocStruct());
+
+                /*
+                 * -------------------------------- Speicherort vorbereiten und downloaden --------------------------------
+                 */
+
+                /*
+                 * -------------------------------- der eigentliche Download der Images --------------------------------
+                 */
+                try {
+                    if (this.exportWithImages) {
+                        imageDownload(process, benutzerHome, atsPpnBand, imageDirectorySuffix);
+                        fulltextDownload(process, benutzerHome, atsPpnBand);
+                    } else if (this.exportFulltext) {
+                        fulltextDownload(process, benutzerHome, atsPpnBand);
+                    }
+                } catch (Exception e) {
+                    Helper.setFehlerMeldung("Export canceled, Process: " + process.getTitel(), e);
+                    return false;
+                }
+
                 /* Wenn METS, dann per writeMetsFile schreiben... */
                 writeMetsFile(process, benutzerHome + File.separator + atsPpnBand + ".xml", gdzfile, false);
-            } else {
-                /* ...wenn nicht, nur ein Fileformat schreiben. */
-                gdzfile.write(benutzerHome + File.separator + atsPpnBand + ".xml");
-            }
 
-            Helper.setMeldung(null, process.getTitel() + ": ", "DMS-Export started");
-
-            if (!ConfigurationHelper.getInstance().isExportWithoutTimeLimit()) {
-
-                /* Success-Ordner wieder löschen */
-                if (process.getProjekt().isDmsImportCreateProcessFolder()) {
-                    File successFile = new File(process.getProjekt().getDmsImportSuccessPath() + File.separator + process.getTitel());
-                    Helper.deleteDir(successFile);
-                }
             }
         }
-
         return true;
     }
 
