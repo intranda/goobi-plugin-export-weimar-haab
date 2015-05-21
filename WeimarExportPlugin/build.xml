@@ -13,7 +13,8 @@
 	<property name="dir.test" value="test/src" />
 	<property name="dir.deploy" value="deploy" />
 	<property name="dir.javadoc" value="doc" />
-	<property name="pluginFolderWin" value="C:/Goobi/plugins/export/" />
+	<property name="dir.testreports" value="testreports"/>
+<property name="pluginFolderWin" value="C:/Goobi/plugins/export/" />
 	<property name="pluginFolderUnix" value="/opt/digiverso/goobi/plugins/export/" />
 	<property name="dir.pmd" value="/opt/pmd" />
 
@@ -24,7 +25,7 @@
 	</path>
 
 	<path id="classpath-test">
-		<fileset dir="/opt/digiverso/goobilibs/lib" />
+	    <fileset dir="/opt/digiverso/goobilibs/lib"/>
 		<fileset dir="/opt/digiverso/libs" />
 		<pathelement location="${dir.build}" />
 		<pathelement location="/opt/digiverso/junit/junit.jar" />
@@ -40,7 +41,6 @@
 	<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="pmd.classpath">
 	</taskdef>
 
-	
 	<tstamp>
 		<format property="tstamped-file-name" pattern="yyyy-MM-dd" locale="en,UK" />
 	</tstamp>
@@ -54,7 +54,7 @@
 		<echo>Cleaning up workspace...</echo>
 		<!--<delete dir="${dir.build}" />-->
 		<delete dir="${dir.deploy}" />
-
+		<delete dir="${dir.testreports}" />
 	</target>
 
 	<!-- Create needed directories -->
@@ -62,8 +62,7 @@
 		<echo>Creating needed directories...</echo>
 		<mkdir dir="${dir.build}" />
 		<mkdir dir="${dir.deploy}" />
-		<mkdir dir="testreports" />
-
+		<mkdir dir="${dir.testreports}" />
 	</target>
 
 	<!-- Store git revision in internal variable -->
@@ -93,11 +92,11 @@
 	</target>
 	<target name="linux" if="isUnix">
 		<echo>Using Linux path: ${pluginFolderUnix}</echo>
-		<copy tofile="${pluginFolderUnix}/${filename}-${git.revision}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
+		<copy tofile="${pluginFolderUnix}/${filename}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
 	</target>
 	<target name="win32" if="isWindows">
 		<echo>Using Windows path: ${pluginFolderWin}</echo>
-		<copy tofile="${pluginFolderWin}$${filename}-${git.revision}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
+		<copy tofile="${pluginFolderWin}$${filename}.jar" file="${dir.deploy}/${filename}-${git.revision}.jar" overwrite="true" />
 	</target>
 
 	<!-- ================================= 
@@ -112,6 +111,7 @@
 			<src path="src" />
 		</javac>
 	</target>
+
 
 	<!-- ================================= 
          Include the libraries
@@ -158,7 +158,7 @@
 		<antcall target="compile" />
 
 		<copy file="${dir.src}/de/intranda/goobi/plugins.txt" todir="${dir.build}/de/intranda/goobi" />
-		
+
 		<echo>Generate Plugin list</echo>
 		<pathconvert property="plugins.project" pathsep=" ">
 			<mapper>
@@ -188,7 +188,6 @@
 
 	<!-- Run all targets in appropiate order for clean compile-->
 	<target name="dist" depends="javadoc, junit, pmd, jar.runnable" description="Creating everything for Jenkins.">
-		<copy file="${dir.src}/de/intranda/goobi/plugins.txt" todir="${dir.build}/de/intranda/goobi" />
 	</target>
 
 	<target name="javadoc">
@@ -196,7 +195,7 @@
 		<mkdir dir="${dir.javadoc}" />
 		<!-- create javadocs -->
 		<javadoc destdir="${dir.javadoc}" sourcepath="${dir.src}" Author="true" version="true" Use="true" noindex="true" Windowtitle="intranda
-	Licenceserver JavaDoc References" Doctitle="intranda Plugin JavaDoc References" bottom="Copyright 2013, inranda GmbH" encoding="UTF8">
+		Licenceserver JavaDoc References" Doctitle="intranda Plugin JavaDoc References" bottom="Copyright 2013, inranda GmbH" encoding="UTF8">
 			<classpath refid="classpath">
 			</classpath>
 		</javadoc>
@@ -205,7 +204,7 @@
 	<target name="junit" depends="clean, createDirs, compile">
 
 		<copy file="plugin_HaabExportPlugin.xml" todir="${dir.deploy}/" />
-		
+
 		<javac destdir="${dir.build}" includeantruntime="false" debug="true">
 			<classpath refid="classpath-test" />
 			<compilerarg value="-Xlint" />
@@ -218,12 +217,11 @@
 		<junit haltonerror="true" haltonfailure="true">
 			<classpath refid="classpath-test" />
 			<formatter type="xml" usefile="true" />
-			<test name="de.intranda.goobi.AllTests" todir="testreports" />
+			<test name="de.intranda.goobi.AllTests" todir="${dir.testreports}" />
 		</junit>
 
 
 	</target>
-
 	<!-- ================================= 
                   DEPLOY
 	     ================================= -->
