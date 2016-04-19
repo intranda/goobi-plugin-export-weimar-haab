@@ -2,6 +2,9 @@ package de.intranda.goobi.plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,6 +36,7 @@ import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.export.download.ExportMets;
 import de.sub.goobi.helper.FilesystemHelper;
 import de.sub.goobi.helper.Helper;
+import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.ExportFileException;
 import de.sub.goobi.helper.exceptions.SwapException;
@@ -237,33 +241,36 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         // File tifOrdner = new File(process.getImagesTifDirectory());
 
         // download sources
-        File sources = new File(process.getSourceDirectory());
-        if (sources.exists() && sources.list().length > 0) {
-            File destination = new File(benutzerHome + File.separator + atsPpnBand + "_src");
-            if (!destination.exists()) {
-                destination.mkdir();
+        // download sources
+        Path sources = Paths.get(process.getSourceDirectory());
+        if (Files.exists(sources) && !NIOFileUtils.list(process.getSourceDirectory()).isEmpty()) {
+            Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + "_src");
+            if (!Files.exists(destination)) {
+                Files.createDirectories(destination);
             }
-            File[] dateien = sources.listFiles();
-            for (int i = 0; i < dateien.length; i++) {
-                File meinZiel = new File(destination + File.separator + dateien[i].getName());
-                Helper.copyFile(dateien[i], meinZiel);
+            List<Path> dateien = NIOFileUtils.listFiles(process.getSourceDirectory());
+            for (Path dir : dateien) {
+                Path meinZiel = Paths.get(destination.toString(), dir.getFileName().toString());
+                Files.copy(dir, meinZiel);
             }
         }
 
-        File ocr = new File(process.getOcrDirectory());
-        if (ocr.exists()) {
-            File[] folder = ocr.listFiles();
-            for (File dir : folder) {
-                if (dir.isDirectory() && dir.list().length > 0) {
-                    String suffix = dir.getName().substring(dir.getName().lastIndexOf("_"));
-                    File destination = new File(benutzerHome + File.separator + atsPpnBand + suffix);
-                    if (!destination.exists()) {
-                        destination.mkdir();
+        Path ocr = Paths.get(process.getOcrDirectory());
+        if (Files.exists(ocr)) {
+
+            List<Path> folder = NIOFileUtils.listFiles(process.getOcrDirectory());
+            for (Path dir : folder) {
+
+                if (Files.isDirectory(dir) && !NIOFileUtils.list(dir.toString()).isEmpty()) {
+                    String suffix = dir.getFileName().toString().substring(dir.getFileName().toString().lastIndexOf("_"));
+                    Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + suffix);
+                    if (!Files.exists(destination)) {
+                        Files.createDirectories(destination);
                     }
-                    File[] files = dir.listFiles();
-                    for (int i = 0; i < files.length; i++) {
-                        File target = new File(destination + File.separator + files[i].getName());
-                        Helper.copyFile(files[i], target);
+                    List<Path> files = NIOFileUtils.listFiles(dir.toString());
+                    for (Path file : files) {
+                        Path target = Paths.get(destination.toString(), file.getFileName().toString());
+                        Files.copy(file, target);
                     }
                 }
             }
@@ -304,10 +311,10 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
             /* jetzt den eigentlichen Kopiervorgang */
 
-            File[] dateien = tifOrdner.listFiles(Helper.dataFilter);
-            for (int i = 0; i < dateien.length; i++) {
-                File meinZiel = new File(zielTif + File.separator + dateien[i].getName());
-                Helper.copyFile(dateien[i], meinZiel);
+            List<Path> files = NIOFileUtils.listFiles(process.getImagesTifDirectory(true), NIOFileUtils.DATA_FILTER);
+            for (Path file : files) {
+                Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
+                Files.copy(file, target);
             }
         }
 
@@ -318,33 +325,34 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                 for (ProjectFileGroup pfg : myFilegroups) {
                     // check if source files exists
                     if (pfg.getFolder() != null && pfg.getFolder().length() > 0) {
-                        File folder = new File(process.getMethodFromName(pfg.getFolder()));
-                        if (folder != null && folder.exists() && folder.list().length > 0) {
-                            File[] files = folder.listFiles();
-                            for (int i = 0; i < files.length; i++) {
-                                File meinZiel = new File(zielTif + File.separator + files[i].getName());
-                                Helper.copyFile(files[i], meinZiel);
+                        Path folder = Paths.get(process.getMethodFromName(pfg.getFolder()));
+                        if (folder != null && java.nio.file.Files.exists(folder) && !NIOFileUtils.list(folder.toString()).isEmpty()) {
+                            List<Path> files = NIOFileUtils.listFiles(folder.toString());
+                            for (Path file : files) {
+                                Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
+
+                                Files.copy(file, target);
                             }
                         }
                     }
                 }
             }
         }
-        File exportFolder = new File(process.getExportDirectory());
-        if (exportFolder.exists() && exportFolder.isDirectory()) {
-            File[] subdir = exportFolder.listFiles();
-            for (File dir : subdir) {
-                if (dir.isDirectory() && dir.list().length > 0) {
-                    if (!dir.getName().matches(".+\\.\\d+")) {
-                        String suffix = dir.getName().substring(dir.getName().lastIndexOf("_"));
-                        File destination = new File(benutzerHome + File.separator + atsPpnBand + suffix);
-                        if (!destination.exists()) {
-                            destination.mkdir();
+        Path exportFolder = Paths.get(process.getExportDirectory());
+        if (Files.exists(exportFolder) && Files.isDirectory(exportFolder)) {
+            List<Path> subdir = NIOFileUtils.listFiles(process.getExportDirectory());
+            for (Path dir : subdir) {
+                if (Files.isDirectory(dir) && !NIOFileUtils.list(dir.toString()).isEmpty()) {
+                    if (!dir.getFileName().toString().matches(".+\\.\\d+")) {
+                        String suffix = dir.getFileName().toString().substring(dir.getFileName().toString().lastIndexOf("_"));
+                        Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + suffix);
+                        if (!Files.exists(destination)) {
+                            Files.createDirectories(destination);
                         }
-                        File[] files = dir.listFiles();
-                        for (int i = 0; i < files.length; i++) {
-                            File target = new File(destination + File.separator + files[i].getName());
-                            Helper.copyFile(files[i], target);
+                        List<Path> files = NIOFileUtils.listFiles(dir.toString());
+                        for (Path file : files) {
+                            Path target = Paths.get(destination.toString(), file.getFileName().toString());
+                            Files.copy(file, target);
                         }
                     }
                 }
