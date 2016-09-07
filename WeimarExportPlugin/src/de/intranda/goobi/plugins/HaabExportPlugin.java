@@ -62,7 +62,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         return PLUGIN_NAME;
     }
 
-    @Override
+    
     public String getDescription() {
         return PLUGIN_NAME;
     }
@@ -251,7 +251,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
             List<Path> dateien = NIOFileUtils.listFiles(process.getSourceDirectory());
             for (Path dir : dateien) {
                 Path meinZiel = Paths.get(destination.toString(), dir.getFileName().toString());
-                Files.copy(dir, meinZiel);
+                Files.copy(dir, meinZiel, NIOFileUtils.STANDARD_COPY_OPTIONS);
             }
         }
 
@@ -270,7 +270,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                     List<Path> files = NIOFileUtils.listFiles(dir.toString());
                     for (Path file : files) {
                         Path target = Paths.get(destination.toString(), file.getFileName().toString());
-                        Files.copy(file, target);
+                        Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
                     }
                 }
             }
@@ -314,7 +314,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
             List<Path> files = NIOFileUtils.listFiles(process.getImagesTifDirectory(true), NIOFileUtils.DATA_FILTER);
             for (Path file : files) {
                 Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
-                Files.copy(file, target);
+                Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
             }
         }
 
@@ -331,7 +331,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                             for (Path file : files) {
                                 Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
 
-                                Files.copy(file, target);
+                                Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
                             }
                         }
                     }
@@ -352,7 +352,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                         List<Path> files = NIOFileUtils.listFiles(dir.toString());
                         for (Path file : files) {
                             Path target = Paths.get(destination.toString(), file.getFileName().toString());
-                            Files.copy(file, target);
+                            Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
                         }
                     }
                 }
