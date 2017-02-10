@@ -117,7 +117,6 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                 whiteList.add("FrontSection");
                 whiteList.add("HeadSection");
                 whiteList.add("FootSection");
-                whiteList.add("Frontispiece");
                 whiteList.add("Spine");
                 whiteList.add("Wrapper");
                 whiteList.add("WrapperWithTitle");
