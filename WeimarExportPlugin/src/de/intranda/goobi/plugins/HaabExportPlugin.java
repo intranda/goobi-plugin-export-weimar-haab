@@ -18,6 +18,19 @@ import org.goobi.production.enums.PluginType;
 import org.goobi.production.plugin.interfaces.IExportPlugin;
 import org.goobi.production.plugin.interfaces.IPlugin;
 
+import de.sub.goobi.config.ConfigPlugins;
+import de.sub.goobi.config.ConfigurationHelper;
+import de.sub.goobi.export.download.ExportMets;
+import de.sub.goobi.helper.FilesystemHelper;
+import de.sub.goobi.helper.Helper;
+import de.sub.goobi.helper.NIOFileUtils;
+import de.sub.goobi.helper.StorageProvider;
+import de.sub.goobi.helper.exceptions.DAOException;
+import de.sub.goobi.helper.exceptions.ExportFileException;
+import de.sub.goobi.helper.exceptions.SwapException;
+import de.sub.goobi.helper.exceptions.UghHelperException;
+import de.sub.goobi.metadaten.MetadatenHelper;
+import net.xeoh.plugins.base.annotations.PluginImplementation;
 import ugh.dl.DocStruct;
 import ugh.dl.ExportFileformat;
 import ugh.dl.Fileformat;
@@ -31,18 +44,6 @@ import ugh.exceptions.ReadException;
 import ugh.exceptions.TypeNotAllowedAsChildException;
 import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.exceptions.WriteException;
-import de.sub.goobi.config.ConfigPlugins;
-import de.sub.goobi.config.ConfigurationHelper;
-import de.sub.goobi.export.download.ExportMets;
-import de.sub.goobi.helper.FilesystemHelper;
-import de.sub.goobi.helper.Helper;
-import de.sub.goobi.helper.NIOFileUtils;
-import de.sub.goobi.helper.exceptions.DAOException;
-import de.sub.goobi.helper.exceptions.ExportFileException;
-import de.sub.goobi.helper.exceptions.SwapException;
-import de.sub.goobi.helper.exceptions.UghHelperException;
-import de.sub.goobi.metadaten.MetadatenHelper;
-import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 @PluginImplementation
 public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlugin {
@@ -62,15 +63,15 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         return PLUGIN_NAME;
     }
 
-    
+
     public String getDescription() {
         return PLUGIN_NAME;
     }
 
     @Override
     public boolean startExport(Process process) throws IOException, InterruptedException, DocStructHasNoTypeException, PreferencesException,
-            WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException, SwapException, DAOException,
-            TypeNotAllowedForParentException {
+    WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException, SwapException, DAOException,
+    TypeNotAllowedForParentException {
         String imageDirectorySuffix = "_tif";
 
         myPrefs = process.getRegelsatz().getPreferences();
@@ -234,7 +235,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
     }
 
     public void fulltextDownload(Process process, File benutzerHome, String atsPpnBand) throws IOException, InterruptedException, SwapException,
-            DAOException {
+    DAOException {
 
         // Helper help = new Helper();
         // File tifOrdner = new File(process.getImagesTifDirectory());
@@ -242,12 +243,12 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         // download sources
         // download sources
         Path sources = Paths.get(process.getSourceDirectory());
-        if (Files.exists(sources) && !NIOFileUtils.list(process.getSourceDirectory()).isEmpty()) {
+        if (Files.exists(sources) && !StorageProvider.getInstance().list(process.getSourceDirectory()).isEmpty()) {
             Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + "_src");
             if (!Files.exists(destination)) {
                 Files.createDirectories(destination);
             }
-            List<Path> dateien = NIOFileUtils.listFiles(process.getSourceDirectory());
+            List<Path> dateien = StorageProvider.getInstance().listFiles(process.getSourceDirectory());
             for (Path dir : dateien) {
                 Path meinZiel = Paths.get(destination.toString(), dir.getFileName().toString());
                 Files.copy(dir, meinZiel, NIOFileUtils.STANDARD_COPY_OPTIONS);
@@ -257,16 +258,16 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         Path ocr = Paths.get(process.getOcrDirectory());
         if (Files.exists(ocr)) {
 
-            List<Path> folder = NIOFileUtils.listFiles(process.getOcrDirectory());
+            List<Path> folder = StorageProvider.getInstance().listFiles(process.getOcrDirectory());
             for (Path dir : folder) {
 
-                if (Files.isDirectory(dir) && !NIOFileUtils.list(dir.toString()).isEmpty()) {
+                if (Files.isDirectory(dir) && !StorageProvider.getInstance().list(dir.toString()).isEmpty()) {
                     String suffix = dir.getFileName().toString().substring(dir.getFileName().toString().lastIndexOf("_"));
                     Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + suffix);
                     if (!Files.exists(destination)) {
                         Files.createDirectories(destination);
                     }
-                    List<Path> files = NIOFileUtils.listFiles(dir.toString());
+                    List<Path> files = StorageProvider.getInstance().listFiles(dir.toString());
                     for (Path file : files) {
                         Path target = Paths.get(destination.toString(), file.getFileName().toString());
                         Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
@@ -277,7 +278,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
     }
 
     public void imageDownload(Process process, File benutzerHome, String atsPpnBand, final String ordnerEndung) throws IOException,
-            InterruptedException, SwapException, DAOException {
+    InterruptedException, SwapException, DAOException {
 
         /*
          * -------------------------------- dann den Ausgangspfad ermitteln --------------------------------
@@ -310,7 +311,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
             /* jetzt den eigentlichen Kopiervorgang */
 
-            List<Path> files = NIOFileUtils.listFiles(process.getImagesTifDirectory(true), NIOFileUtils.DATA_FILTER);
+            List<Path> files = StorageProvider.getInstance().listFiles(process.getImagesTifDirectory(true), NIOFileUtils.DATA_FILTER);
             for (Path file : files) {
                 Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
                 Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
@@ -325,8 +326,8 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                     // check if source files exists
                     if (pfg.getFolder() != null && pfg.getFolder().length() > 0) {
                         Path folder = Paths.get(process.getMethodFromName(pfg.getFolder()));
-                        if (folder != null && java.nio.file.Files.exists(folder) && !NIOFileUtils.list(folder.toString()).isEmpty()) {
-                            List<Path> files = NIOFileUtils.listFiles(folder.toString());
+                        if (folder != null && java.nio.file.Files.exists(folder) && !StorageProvider.getInstance().list(folder.toString()).isEmpty()) {
+                            List<Path> files = StorageProvider.getInstance().listFiles(folder.toString());
                             for (Path file : files) {
                                 Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
 
@@ -339,16 +340,16 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         }
         Path exportFolder = Paths.get(process.getExportDirectory());
         if (Files.exists(exportFolder) && Files.isDirectory(exportFolder)) {
-            List<Path> subdir = NIOFileUtils.listFiles(process.getExportDirectory());
+            List<Path> subdir = StorageProvider.getInstance().listFiles(process.getExportDirectory());
             for (Path dir : subdir) {
-                if (Files.isDirectory(dir) && !NIOFileUtils.list(dir.toString()).isEmpty()) {
+                if (Files.isDirectory(dir) && !StorageProvider.getInstance().list(dir.toString()).isEmpty()) {
                     if (!dir.getFileName().toString().matches(".+\\.\\d+")) {
                         String suffix = dir.getFileName().toString().substring(dir.getFileName().toString().lastIndexOf("_"));
                         Path destination = Paths.get(benutzerHome.toString(), atsPpnBand + suffix);
                         if (!Files.exists(destination)) {
                             Files.createDirectories(destination);
                         }
-                        List<Path> files = NIOFileUtils.listFiles(dir.toString());
+                        List<Path> files = StorageProvider.getInstance().listFiles(dir.toString());
                         for (Path file : files) {
                             Path target = Paths.get(destination.toString(), file.getFileName().toString());
                             Files.copy(file, target, NIOFileUtils.STANDARD_COPY_OPTIONS);
@@ -361,8 +362,8 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
     @Override
     public boolean startExport(Process process, String destination) throws IOException, InterruptedException, DocStructHasNoTypeException,
-            PreferencesException, WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException,
-            SwapException, DAOException, TypeNotAllowedForParentException {
+    PreferencesException, WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException,
+    SwapException, DAOException, TypeNotAllowedForParentException {
 
         return startExport(process);
     }
