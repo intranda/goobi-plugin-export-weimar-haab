@@ -15,8 +15,8 @@ Detail | Description
 **Plugin identifier**       | HaabExport
 **Plugin type**             | Export plugin
 **Licence**                 | GPL 2.0 or newer  
-**Documentation (German)**  | https://docs.goobi.io/goobi-workflow-plugins-de/export/haabexport
-**Documentation (English)** | https://docs.goobi.io/goobi-workflow-plugins-en/export/haabexport
+**Documentation (German)**  | https://docs.goobi.io/goobi-workflow-plugins-de/export/plugin-intranda-export-haab
+**Documentation (English)** | https://docs.goobi.io/goobi-workflow-plugins-en/export/plugin-intranda-export-haab
 
 ## Goobi details
 
