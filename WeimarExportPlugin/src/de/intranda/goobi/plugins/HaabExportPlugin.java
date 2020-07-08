@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -84,8 +85,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
         File benutzerHome;
 
-        @SuppressWarnings("unchecked")
-        List<String> folderList = ConfigPlugins.getPluginConfig(this).getList("exportFolder");
+        List<String> folderList = Arrays.asList(ConfigPlugins.getPluginConfig(this).getStringArray("exportFolder"));
 
         for (String folder : folderList) {
             if (folder != null && !folder.isEmpty()) {
