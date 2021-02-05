@@ -64,15 +64,14 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
         return PLUGIN_NAME;
     }
 
-
     public String getDescription() {
         return PLUGIN_NAME;
     }
 
     @Override
     public boolean startExport(Process process) throws IOException, InterruptedException, DocStructHasNoTypeException, PreferencesException,
-    WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException, SwapException, DAOException,
-    TypeNotAllowedForParentException {
+            WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException, SwapException, DAOException,
+            TypeNotAllowedForParentException {
         String imageDirectorySuffix = "_tif";
 
         myPrefs = process.getRegelsatz().getPreferences();
@@ -235,7 +234,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
     }
 
     public void fulltextDownload(Process process, File benutzerHome, String atsPpnBand) throws IOException, InterruptedException, SwapException,
-    DAOException {
+            DAOException {
 
         // Helper help = new Helper();
         // File tifOrdner = new File(process.getImagesTifDirectory());
@@ -278,7 +277,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
     }
 
     public void imageDownload(Process process, File benutzerHome, String atsPpnBand, final String ordnerEndung) throws IOException,
-    InterruptedException, SwapException, DAOException {
+            InterruptedException, SwapException, DAOException {
 
         /*
          * -------------------------------- dann den Ausgangspfad ermitteln --------------------------------
@@ -300,7 +299,7 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                 /*
                  * wenn kein Agora-Import, dann den Ordner mit Benutzerberechtigung neu anlegen
                  */
-                User myBenutzer = (User) Helper.getManagedBeanValue("#{LoginForm.myBenutzer}");
+                User myBenutzer = Helper.getCurrentUser();
                 try {
                     FilesystemHelper.createDirectoryForUser(zielTif.getAbsolutePath(), myBenutzer.getLogin());
                 } catch (Exception e) {
@@ -326,7 +325,8 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
                     // check if source files exists
                     if (pfg.getFolder() != null && pfg.getFolder().length() > 0) {
                         Path folder = Paths.get(process.getMethodFromName(pfg.getFolder()));
-                        if (folder != null && java.nio.file.Files.exists(folder) && !StorageProvider.getInstance().list(folder.toString()).isEmpty()) {
+                        if (folder != null && java.nio.file.Files.exists(folder)
+                                && !StorageProvider.getInstance().list(folder.toString()).isEmpty()) {
                             List<Path> files = StorageProvider.getInstance().listFiles(folder.toString());
                             for (Path file : files) {
                                 Path target = Paths.get(zielTif.toString(), file.getFileName().toString());
@@ -362,8 +362,8 @@ public class HaabExportPlugin extends ExportMets implements IExportPlugin, IPlug
 
     @Override
     public boolean startExport(Process process, String destination) throws IOException, InterruptedException, DocStructHasNoTypeException,
-    PreferencesException, WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException,
-    SwapException, DAOException, TypeNotAllowedForParentException {
+            PreferencesException, WriteException, MetadataTypeNotAllowedException, ExportFileException, UghHelperException, ReadException,
+            SwapException, DAOException, TypeNotAllowedForParentException {
 
         return startExport(process);
     }
