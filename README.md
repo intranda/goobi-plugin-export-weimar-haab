@@ -35,6 +35,6 @@ This plugin was developed by intranda. If you have any issues, feedback, questio
 Contact | Details
 --- | ---
 **Company name**  | intranda GmbH
-**Address**       | Bertha-von-Suttner-Str. 9, 37085 Göttingen, Germany
+**Address**       | Bertha-von-Suttner-Str. 9,<br/>37085 Göttingen, Germany
 **Web site**      | https://www.intranda.com
 **Twitter**       | https://twitter.com/intranda
