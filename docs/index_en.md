@@ -3,6 +3,10 @@ title: HAAB Export
 identifier: HaabExport
 published: true
 description: This is a technical documentation for the Goobi Export plugin to export to different directories for the Klassik Stiftung Weimar.
+keywords:
+    - Goobi workflow
+    - Plugin
+    - Export Plugin
 ---
 ## Introduction
 This documentation describes the installation, configuration and use of an export plug-in in Goobi, as required for the Klassik Stiftung Weimar within the digitization project. With the help of this Goobi export plug-in, Goobi processes can be simultaneously exported to several locations within a single workflow step. The special features of the Klassik Stiftung Weimar, such as the use of EPNs as identifiers and the merging of covers and sheet cuts into a common structural element, remain unchanged.
